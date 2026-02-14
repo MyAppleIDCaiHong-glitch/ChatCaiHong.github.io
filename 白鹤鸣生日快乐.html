@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <title>生日快乐 - 气球托举名字</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(#87CEEB, #E0F6FF);
+            overflow: hidden; /* 隐藏超出屏幕的部分 */
+            font-family: "Microsoft YaHei", sans-serif;
+            /* 禁止横屏拉伸，适配竖屏 */
+            width: 100vw;
+            height: 100vh;
+            position: fixed;
+        }
+
+        /* 名字容器（核心：循环抬举动画） */
+        .name-container {
+            position: absolute;
+            bottom: 50px; /* 初始在底部 */
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center; /* 文字居中 */
+            /* 核心：循环抬举动画（升起3s → 停留2s → 回落3s → 停留1s，无限循环） */
+            animation: liftName 9s ease-in-out infinite;
+            z-index: 15;
+        }
+
+        /* 彩虹渐变名字样式（适配竖屏文字大小） */
+        .birthday-name {
+            /* 响应式字体：竖屏不挤，横屏不超大 */
+            font-size: clamp(28px, 8vw, 50px);
+            font-weight: bold;
+            background: linear-gradient(90deg, 
+                #ff3c38, #ff9500, #ffcc00, #4ade80, #38bdf8, #a78bfa, #f472b6
+            );
+            background-size: 600% 100%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: rainbow 8s linear infinite;
+            text-shadow: 2px 2px 8px rgba(0,0,0,0.1);
+            /* 文字下方留空，避免挡气球 */
+            display: inline-block;
+            margin-bottom: 60px;
+            position: relative;
+            z-index: 20; /* 文字层级最高 */
+        }
+
+        /* 托举名字的气球（适配竖屏比例，不挤扁） */
+        .lift-balloons {
+            position: absolute;
+            bottom: 0; /* 贴在名字容器底部 */
+            left: 50%;
+            transform: translateX(-50%);
+            /* 适配竖屏：换行显示气球，避免左右挤 */
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+            padding: 0 20px;
+            z-index: 10; /* 气球层级低于文字 */
+            /* 和名字同步循环抬举 */
+            animation: liftName 9s ease-in-out infinite;
+        }
+
+        /* 背景升空的气球容器（适配竖屏布局） */
+        .background-balloons {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            /* 竖屏：分散排列，不挤在一行 */
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-around;
+            padding: 0 20px;
+            z-index: 5; /* 背景气球层级最低 */
+        }
+
+        /* 通用气球样式（固定宽高比，永不挤扁） */
+        .balloon {
+            /* 固定宽高比 4:5，适配任何屏幕都不变形 */
+            width: clamp(50px, 12vw, 80px);
+            height: calc(clamp(50px, 12vw, 80px) * 1.25);
+            background: red;
+            border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+            position: relative;
+            opacity: 0.9;
+            /* 避免气球被挤压变形 */
+            flex-shrink: 0;
+        }
+
+        /* 气球绳子 */
+        .balloon::after {
+            content: '';
+            position: absolute;
+            bottom: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 1px;
+            height: 30px;
+            background: #333;
+            opacity: 0.8;
+        }
+
+        /* 托举气球的颜色 */
+        .lift-balloons .balloon:nth-child(1) { background: #ff3c38; }
+        .lift-balloons .balloon:nth-child(2) { background: #ff9500; }
+        .lift-balloons .balloon:nth-child(3) { background: #ffcc00; }
+        .lift-balloons .balloon:nth-child(4) { background: #4ade80; }
+        .lift-balloons .balloon:nth-child(5) { background: #38bdf8; }
+        .lift-balloons .balloon:nth-child(6) { background: #a78bfa; }
+        .lift-balloons .balloon:nth-child(7) { background: #f472b6; }
+
+        /* 循环抬举动画（核心：升起→停留→回落→停留） */
+        @keyframes liftName {
+            0% { /* 初始：底部 */
+                bottom: 50px;
+                opacity: 0.8;
+                transform: translateX(-50%);
+            }
+            33% { /* 升起：3秒后到中间 */
+                bottom: 50%;
+                opacity: 1;
+                transform: translateX(-50%) translateY(-50%);
+            }
+            55% { /* 停留：中间保持2秒 */
+                bottom: 50%;
+                opacity: 1;
+                transform: translateX(-50%) translateY(-50%);
+            }
+            88% { /* 回落：3秒后回到底部 */
+                bottom: 50px;
+                opacity: 0.8;
+                transform: translateX(-50%);
+            }
+            100% { /* 停留：底部保持1秒，然后循环 */
+                bottom: 50px;
+                opacity: 0.8;
+                transform: translateX(-50%);
+            }
+        }
+
+        /* 彩虹文字动画 */
+        @keyframes rainbow {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 100% 50%; }
+        }
+
+        /* 背景气球升空动画（适配竖屏速度） */
+        @keyframes riseBgBalloon {
+            0% {
+                transform: translateY(0);
+                opacity: 0.9;
+            }
+            100% {
+                transform: translateY(-120vh);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 名字容器（👇 替换____为同学名字） -->
+    <div class="name-container">
+        <div class="birthday-name">祝白鹤鸣生日快乐</div>
+        <!-- 托举名字的气球（增加数量，竖屏换行显示） -->
+        <div class="lift-balloons">
+            <div class="balloon"></div>
+            <div class="balloon"></div>
+            <div class="balloon"></div>
+            <div class="balloon"></div>
+            <div class="balloon"></div>
+            <div class="balloon"></div>
+            <div class="balloon"></div>
+        </div>
+    </div>
+
+    <!-- 背景升空的气球容器 -->
+    <div class="background-balloons" id="bgBalloons"></div>
+
+    <script>
+        // 生成背景随机升空的气球（适配竖屏）
+        function createBgBalloon() {
+            const balloon = document.createElement('div');
+            balloon.classList.add('balloon');
+            // 随机彩虹色
+            const colors = ['#ff3c38', '#ff9500', '#ffcc00', '#4ade80', '#38bdf8', '#a78bfa', '#f472b6'];
+            balloon.style.background = colors[Math.floor(Math.random() * colors.length)];
+            // 随机升空动画时长（竖屏适配：6-12秒，更舒缓）
+            const duration = 6 + Math.random() * 6;
+            balloon.style.animation = `riseBgBalloon ${duration}s ease-in-out infinite`;
+            // 随机延迟
+            balloon.style.animationDelay = `${Math.random() * 5}s`;
+            return balloon;
+        }
+
+        // 初始化背景气球（竖屏增加数量，更饱满）
+        const bgContainer = document.getElementById('bgBalloons');
+        for (let i = 0; i < 20; i++) {
+            bgContainer.appendChild(createBgBalloon());
+        }
+
+        // 循环生成新的背景气球
+        setInterval(() => {
+            // 移除旧气球（保留前8个避免断档）
+            const allBgBalloons = document.querySelectorAll('.background-balloons .balloon');
+            allBgBalloons.forEach((balloon, index) => {
+                if (index > 7) balloon.remove();
+            });
+            // 添加新气球
+            for (let i = 0; i < 15; i++) {
+                bgContainer.appendChild(createBgBalloon());
+            }
+        }, 6000);
+    </script>
+</body>
+</html>
