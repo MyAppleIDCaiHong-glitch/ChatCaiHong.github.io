@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>超级万年历 - 带日程和节日功能</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  
+  <!-- Tailwind 配置 -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#3B82F6',
+            secondary: '#10B981',
+            accent: '#8B5CF6',
+            dark: '#1E293B',
+            light: '#F8FAFC',
+            schedule: {
+              work: '#F87171',
+              life: '#FBBF24',
+              holiday: '#60A5FA',
+              personal: '#A78BFA'
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+          },
+        },
+      }
+    }
+  </script>
+  
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .content-auto {
+        content-visibility: auto;
+      }
+      .calendar-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+      }
+      .date-hover {
+        @apply transition-all duration-300 hover:bg-primary/20 hover:scale-105 cursor-pointer;
+      }
+      .current-day {
+        @apply bg-primary text-white font-bold;
+      }
+      .prev-next-month {
+        @apply text-gray-400;
+      }
+      .btn-transition {
+        @apply transition-all duration-300 hover:shadow-lg transform hover:-translate-y-0.5;
+      }
+      .has-schedule {
+        @apply relative;
+      }
+      .has-schedule::after {
+        content: '';
+        @apply absolute bottom-1 left-1/2 transform -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-schedule-work;
+      }
+      .has-holiday {
+        @apply relative;
+      }
+      .has-holiday::before {
+        content: '';
+        @apply absolute top-1 left-1/2 transform -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-secondary;
+      }
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-light to-gray-100 min-h-screen font-sans text-dark">
+  <div class="container mx-auto px-4 py-8 max-w-7xl">
+    <!-- 标题区域 -->
+    <header class="text-center mb-10 animate-fade-in">
+      <h1 class="text-[clamp(2rem,5vw,3.5rem)] font-bold text-dark mb-2 bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent">
+        超级万年历
+      </h1>
+      <p class="text-gray-600 text-lg">带日程管理和节日标注 - 覆盖公元1年至9999999年</p>
+    </header>
+    
+    <!-- 日历和详情区域 -->
+    <div class="flex flex-col lg:flex-row gap-6">
+      <!-- 日历主体 -->
+      <main class="bg-white rounded-2xl shadow-xl overflow-hidden transform transition-all duration-500 hover:shadow-2xl lg:w-2/3">
+        <!-- 控制栏 -->
+        <div class="bg-gradient-to-r from-primary to-accent p-6 text-white">
+          <div class="flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center space-x-4">
+              <button id="prevYear" class="p-2 rounded-full hover:bg-white/20 btn-transition">
+                <i class="fa fa-chevron-left"></i>
+              </button>
+              <button id="prevMonth" class="p-2 rounded-full hover:bg-white/20 btn-transition">
+                <i class="fa fa-angle-left text-lg"></i>
+              </button>
+              
+              <div class="text-center">
+                <h2 id="currentMonthYear" class="text-xl md:text-2xl font-bold"></h2>
+                <p id="currentDate" class="text-sm opacity-90 mt-1"></p>
+              </div>
+              
+              <button id="nextMonth" class="p-2 rounded-full hover:bg-white/20 btn-transition">
+                <i class="fa fa-angle-right text-lg"></i>
+              </button>
+              <button id="nextYear" class="p-2 rounded-full hover:bg-white/20 btn-transition">
+                <i class="fa fa-chevron-right"></i>
+              </button>
+            </div>
+            
+            <div class="flex items-center space-x-2">
+              <button id="todayBtn" class="bg-white text-primary px-4 py-2 rounded-lg font-medium btn-transition">
+                <i class="fa fa-calendar-o mr-1"></i> 今天
+              </button>
+            </div>
+          </div>
+          
+          <!-- 年份快速跳转 -->
+          <div class="mt-6 bg-white/10 p-3 rounded-lg backdrop-blur-sm">
+            <div class="flex items-center gap-2 flex-wrap">
+              <label for="yearInput" class="text-sm">跳转至年份:</label>
+              <input type="number" id="yearInput" min="1" max="9999999" class="bg-white/20 border border-white/30 rounded px-3 py-1.5 text-white w-32 md:w-40 focus:outline-none focus:ring-2 focus:ring-white/50" placeholder="输入年份">
+              <select id="monthSelect" class="bg-white/20 border border-white/30 rounded px-3 py-1.5 text-white focus:outline-none focus:ring-2 focus:ring-white/50">
+                <option value="0">一月</option>
+                <option value="1">二月</option>
+                <option value="2">三月</option>
+                <option value="3">四月</option>
+                <option value="4">五月</option>
+                <option value="5">六月</option>
+                <option value="6">七月</option>
+                <option value="7">八月</option>
+                <option value="8">九月</option>
+                <option value="9">十月</option>
+                <option value="10">十一月</option>
+                <option value="11">十二月</option>
+              </select>
+              <button id="jumpBtn" class="bg-white text-primary px-3 py-1.5 rounded text-sm font-medium btn-transition">
+                跳转
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 星期标题 -->
+        <div class="calendar-grid border-b border-gray-200">
+          <div class="py-3 text-center font-medium text-gray-500">日</div>
+          <div class="py-3 text-center font-medium text-gray-700">一</div>
+          <div class="py-3 text-center font-medium text-gray-700">二</div>
+          <div class="py-3 text-center font-medium text-gray-700">三</div>
+          <div class="py-3 text-center font-medium text-gray-700">四</div>
+          <div class="py-3 text-center font-medium text-gray-700">五</div>
+          <div class="py-3 text-center font-medium text-gray-500">六</div>
+        </div>
+        
+        <!-- 日期网格 -->
+        <div id="calendarDays" class="calendar-grid auto-rows-fr">
+          <!-- 日期将通过JavaScript动态生成 -->
+        </div>
+      </main>
+      
+      <!-- 右侧详情面板 -->
+      <aside class="bg-white rounded-2xl shadow-xl overflow-hidden lg:w-1/3">
+        <div class="bg-gradient-to-r from-accent to-primary p-4 text-white">
+          <h3 id="detailTitle" class="text-xl font-bold">选择一个日期查看详情</h3>
+        </div>
+        
+        <div id="dateDetails" class="p-5 hidden">
+          <!-- 节日信息 -->
+          <div class="mb-6">
+            <h4 class="text-lg font-semibold mb-2 flex items-center">
+              <i class="fa fa-star text-secondary mr-2"></i>节日
+            </h4>
+            <div id="holidayInfo" class="text-gray-600 italic">
+              无节日信息
+            </div>
+          </div>
+          
+          <!-- 日程信息 -->
+          <div class="mb-6">
+            <div class="flex justify-between items-center mb-2">
+              <h4 class="text-lg font-semibold flex items-center">
+                <i class="fa fa-list-alt text-schedule-work mr-2"></i>日程安排
+              </h4>
+              <button id="addScheduleBtn" class="text-primary text-sm hover:underline">
+                <i class="fa fa-plus-circle mr-1"></i>添加
+              </button>
+            </div>
+            <div id="scheduleList" class="space-y-2 max-h-48 overflow-y-auto">
+              <div class="text-gray-500 italic text-center py-4">
+                该日期暂无日程
+              </div>
+            </div>
+          </div>
+          
+          <!-- 日期信息 -->
+          <div class="border-t pt-4 text-sm text-gray-500">
+            <p id="dateInfo"></p>
+          </div>
+        </div>
+        
+        <div id="noDateSelected" class="p-8 text-center text-gray-500">
+          <i class="fa fa-calendar text-5xl mb-4 text-gray-300"></i>
+          <p>请在日历上选择一个日期</p>
+        </div>
+      </aside>
+    </div>
+    
+    <!-- 日程类型说明 -->
+    <div class="mt-6 bg-white rounded-xl shadow-lg p-4">
+      <h4 class="font-medium mb-2">日程类型说明：</h4>
+      <div class="flex flex-wrap gap-x-6 gap-y-2 text-sm">
+        <div class="flex items-center"><span class="w-3 h-3 bg-schedule-work rounded-full inline-block mr-2"></span> 工作</div>
+        <div class="flex items-center"><span class="w-3 h-3 bg-schedule-life rounded-full inline-block mr-2"></span> 生活</div>
+        <div class="flex items-center"><span class="w-3 h-3 bg-schedule-holiday rounded-full inline-block mr-2"></span> 假期</div>
+        <div class="flex items-center"><span class="w-3 h-3 bg-schedule-personal rounded-full inline-block mr-2"></span> 个人</div>
+        <div class="flex items-center ml-auto"><span class="w-3 h-3 bg-secondary rounded-full inline-block mr-2"></span> 节日</div>
+      </div>
+    </div>
+    
+    <!-- 页脚 - 已按要求修改 -->
+    <footer class="mt-10 text-center text-gray-500 text-sm pb-6">
+      <p>超级万年历 | 支持1年至9999999年查询</p>
+    </footer>
+  </div>
+  
+  <!-- 添加/编辑日程模态框 -->
+  <div id="scheduleModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6 transform transition-all scale-95 opacity-0" id="modalContent">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-xl font-bold text-dark" id="modalTitle">添加日程</h3>
+        <button id="closeModal" class="text-gray-500 hover:text-gray-700">
+          <i class="fa fa-times text-xl"></i>
+        </button>
+      </div>
+      
+      <input type="hidden" id="scheduleDate">
+      
+      <div class="mb-4">
+        <label for="scheduleTitle" class="block text-sm font-medium text-gray-700 mb-1">日程标题</label>
+        <input type="text" id="scheduleTitle" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="输入日程标题">
+      </div>
+      
+      <div class="mb-4">
+        <label for="scheduleType" class="block text-sm font-medium text-gray-700 mb-1">日程类型</label>
+        <select id="scheduleType" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+          <option value="work">工作</option>
+          <option value="life">生活</option>
+          <option value="holiday">假期</option>
+          <option value="personal">个人</option>
+        </select>
+      </div>
+      
+      <div class="mb-6">
+        <label for="scheduleDesc" class="block text-sm font-medium text-gray-700 mb-1">详细描述</label>
+        <textarea id="scheduleDesc" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="输入详细描述（可选）"></textarea>
+      </div>
+      
+      <div class="flex justify-end gap-3">
+        <button id="deleteScheduleBtn" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition hidden">
+          <i class="fa fa-trash mr-1"></i> 删除
+        </button>
+        <button id="cancelModal" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition">
+          取消
+        </button>
+        <button id="saveScheduleBtn" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition">
+          保存
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 全局变量存储当前显示的年月
+    let currentDate = new Date();
+    let currentYear = currentDate.getFullYear();
+    let currentMonth = currentDate.getMonth();
+    let selectedDate = null;
+    
+    // 月份名称
+    const monthNames = ["一月", "二月", "三月", "四月", "五月", "六月", 
+                       "七月", "八月", "九月", "十月", "十一月", "十二月"];
+    
+    // 从本地存储加载日程
+    let schedules = JSON.parse(localStorage.getItem('calendarSchedules')) || {};
+    
+    // 内置节日数据 (按 MM-DD 格式存储)
+    const holidays = {
+      "01-01": "元旦",
+      "02-14": "情人节",
+      "03-08": "国际妇女节",
+      "03-12": "植树节",
+      "04-01": "愚人节",
+      "05-01": "国际劳动节",
+      "05-04": "青年节",
+      "06-01": "国际儿童节",
+      "07-01": "建党节",
+      "08-01": "建军节",
+      "09-10": "教师节",
+      "10-01": "国庆节",
+      "12-25": "圣诞节",
+      "01-05": "小寒",
+      "01-20": "大寒",
+      "02-04": "立春",
+      "02-19": "雨水",
+      "03-05": "惊蛰",
+      "03-20": "春分",
+      "04-04": "清明",
+      "04-20": "谷雨",
+      "05-05": "立夏",
+      "05-21": "小满",
+      "06-05": "芒种",
+      "06-21": "夏至",
+      "07-07": "小暑",
+      "07-23": "大暑",
+      "08-07": "立秋",
+      "08-23": "处暑",
+      "09-07": "白露",
+      "09-23": "秋分",
+      "10-08": "寒露",
+      "10-23": "霜降",
+      "11-07": "立冬",
+      "11-22": "小雪",
+      "12-07": "大雪",
+      "12-21": "冬至"
+    };
+    
+    // 初始化日历
+    document.addEventListener('DOMContentLoaded', () => {
+      renderCalendar(currentYear, currentMonth);
+      setupEventListeners();
+      
+      // 设置当前年份和月份到输入框
+      document.getElementById('yearInput').value = currentYear;
+      document.getElementById('monthSelect').value = currentMonth;
+    });
+    
+    // 设置事件监听器
+    function setupEventListeners() {
+      // 月份和年份导航按钮
+      document.getElementById('prevMonth').addEventListener('click', () => navigate(-1, 0));
+      document.getElementById('nextMonth').addEventListener('click', () => navigate(1, 0));
+      document.getElementById('prevYear').addEventListener('click', () => navigate(0, -1));
+      document.getElementById('nextYear').addEventListener('click', () => navigate(0, 1));
+      
+      // 今天按钮
+      document.getElementById('todayBtn').addEventListener('click', () => {
+        const today = new Date();
+        currentYear = today.getFullYear();
+        currentMonth = today.getMonth();
+        renderCalendar(currentYear, currentMonth);
+        updateInputFields();
+        selectDate(today);
+      });
+      
+      // 跳转按钮
+      document.getElementById('jumpBtn').addEventListener('click', jumpToDate);
+      
+      // 输入框回车事件
+      document.getElementById('yearInput').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') jumpToDate();
+      });
+      
+      document.getElementById('monthSelect').addEventListener('change', jumpToDate);
+      
+      // 日程模态框相关
+      document.getElementById('addScheduleBtn').addEventListener('click', openAddScheduleModal);
+      document.getElementById('closeModal').addEventListener('click', closeModal);
+      document.getElementById('cancelModal').addEventListener('click', closeModal);
+      document.getElementById('saveScheduleBtn').addEventListener('click', saveSchedule);
+      document.getElementById('deleteScheduleBtn').addEventListener('click', deleteSchedule);
+      
+      // 点击模态框外部关闭
+      document.getElementById('scheduleModal').addEventListener('click', (e) => {
+        if (e.target === document.getElementById('scheduleModal')) {
+          closeModal();
+        }
+      });
+    }
+    
+    // 导航到前一个/后一个月或年
+    function navigate(monthStep, yearStep) {
+      currentMonth += monthStep;
+      currentYear += yearStep;
+      
+      // 处理月份溢出
+      if (currentMonth > 11) {
+        currentMonth = 0;
+        currentYear++;
+      } else if (currentMonth < 0) {
+        currentMonth = 11;
+        currentYear--;
+      }
+      
+      // 确保年份在有效范围内
+      if (currentYear < 1) currentYear = 1;
+      if (currentYear > 9999999) currentYear = 9999999;
+      
+      renderCalendar(currentYear, currentMonth);
+      updateInputFields();
+    }
+    
+    // 跳转到指定日期
+    function jumpToDate() {
+      const yearInput = document.getElementById('yearInput');
+      const monthSelect = document.getElementById('monthSelect');
+      
+      let year = parseInt(yearInput.value);
+      const month = parseInt(monthSelect.value);
+      
+      // 验证年份
+      if (isNaN(year) || year < 1 || year > 9999999) {
+        alert('请输入1到9999999之间的有效年份');
+        yearInput.focus();
+        return;
+      }
+      
+      currentYear = year;
+      currentMonth = month;
+      
+      renderCalendar(currentYear, currentMonth);
+      updateInputFields();
+    }
+    
+    // 更新输入框值
+    function updateInputFields() {
+      document.getElementById('yearInput').value = currentYear;
+      document.getElementById('monthSelect').value = currentMonth;
+    }
+    
+    // 渲染日历
+    function renderCalendar(year, month) {
+      const calendarDays = document.getElementById('calendarDays');
+      calendarDays.innerHTML = ''; // 清空现有内容
+      
+      // 更新标题
+      document.getElementById('currentMonthYear').textContent = `${year}年 ${monthNames[month]}`;
+      
+      // 更新当前日期显示
+      const now = new Date();
+      document.getElementById('currentDate').textContent = 
+        `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日 ` + 
+        `星期${['日', '一', '二', '三', '四', '五', '六'][now.getDay()]}`;
+      
+      // 获取当月第一天是星期几
+      const firstDay = new Date(year, month, 1).getDay();
+      
+      // 获取当月的天数
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      
+      // 获取上个月的天数
+      const daysInPrevMonth = month === 0 ? new Date(year - 1, 11, 0).getDate() : new Date(year, month, 0).getDate();
+      
+      // 添加上个月的最后几天
+      for (let i = 0; i < firstDay; i++) {
+        const day = daysInPrevMonth - firstDay + i + 1;
+        const prevMonth = month === 0 ? 11 : month - 1;
+        const prevYear = month === 0 ? year - 1 : year;
+        const dateStr = getDateString(prevYear, prevMonth, day);
+        const hasSchedule = !!schedules[dateStr];
+        const hasHoliday = isHoliday(prevMonth, day);
+        
+        const dayElement = createDayElement(day, true, false, hasSchedule, hasHoliday, prevYear, prevMonth);
+        calendarDays.appendChild(dayElement);
+      }
+      
+      // 添加当月的天数
+      const today = new Date();
+      const isCurrentMonth = today.getFullYear() === year && today.getMonth() === month;
+      
+      for (let i = 1; i <= daysInMonth; i++) {
+        const isToday = isCurrentMonth && today.getDate() === i;
+        const dateStr = getDateString(year, month, i);
+        const hasSchedule = !!schedules[dateStr];
+        const hasHoliday = isHoliday(month, i);
+        
+        const dayElement = createDayElement(i, false, isToday, hasSchedule, hasHoliday, year, month);
+        calendarDays.appendChild(dayElement);
+      }
+      
+      // 添加下个月的前几天，使日历保持6行结构
+      const totalDays = firstDay + daysInMonth;
+      const nextMonthDays = totalDays % 7 === 0 ? 0 : 7 - (totalDays % 7);
+      
+      for (let i = 1; i <= nextMonthDays; i++) {
+        const nextMonth = month === 11 ? 0 : month + 1;
+        const nextYear = month === 11 ? year + 1 : year;
+        const dateStr = getDateString(nextYear, nextMonth, i);
+        const hasSchedule = !!schedules[dateStr];
+        const hasHoliday = isHoliday(nextMonth, i);
+        
+        const dayElement = createDayElement(i, true, false, hasSchedule, hasHoliday, nextYear, nextMonth);
+        calendarDays.appendChild(dayElement);
+      }
+      
+      // 添加淡入动画
+      Array.from(calendarDays.children).forEach((day, index) => {
+        day.style.opacity = '0';
+        day.style.transform = 'translateY(10px)';
+        day.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+        
+        setTimeout(() => {
+          day.style.opacity = '1';
+          day.style.transform = 'translateY(0)';
+        }, 50 + index * 10);
+      });
+      
+      // 如果有选中的日期且在当前月，重新选中
+      if (selectedDate && selectedDate.getFullYear() === year && selectedDate.getMonth() === month) {
+        highlightSelectedDate(selectedDate);
+      }
+    }
+    
+    // 创建日期元素
+    function createDayElement(day, isOtherMonth, isToday, hasSchedule, hasHoliday, year, month) {
+      const dayElement = document.createElement('div');
+      
+      // 设置基础样式
+      dayElement.className = 'p-2 border-b border-r border-gray-100 last:border-r-0 relative';
+      
+      // 创建内部容器
+      const innerDiv = document.createElement('div');
+      let classes = `h-12 md:h-16 rounded-lg flex items-center justify-center font-medium date-hover`;
+      
+      if (isOtherMonth) classes += ' prev-next-month';
+      if (isToday) classes += ' current-day';
+      if (hasSchedule) classes += ' has-schedule';
+      if (hasHoliday) classes += ' has-holiday';
+      
+      innerDiv.className = classes;
+      innerDiv.textContent = day;
+      
+      // 存储日期信息
+      innerDiv.dataset.year = year;
+      innerDiv.dataset.month = month;
+      innerDiv.dataset.day = day;
+      
+      // 添加日期点击事件
+      innerDiv.addEventListener('click', () => {
+        const date = new Date(year, month, day);
+        selectDate(date);
+      });
+      
+      dayElement.appendChild(innerDiv);
+      return dayElement;
+    }
+    
+    // 选择日期并显示详情
+    function selectDate(date) {
+      selectedDate = date;
+      const year = date.getFullYear();
+      const month = date.getMonth();
+      const day = date.getDate();
+      
+      // 更新详情标题
+      document.getElementById('detailTitle').textContent = `${year}年 ${monthNames[month]} ${day}日`;
+      
+      // 显示详情面板，隐藏提示信息
+      document.getElementById('dateDetails').classList.remove('hidden');
+      document.getElementById('noDateSelected').classList.add('hidden');
+      
+      // 显示节日信息
+      const holidayInfo = document.getElementById('holidayInfo');
+      const holiday = getHoliday(month, day);
+      holidayInfo.innerHTML = holiday ? `<span class="text-secondary font-medium">${holiday}</span>` : '无节日信息';
+      
+      // 显示日程信息
+      renderSchedules(year, month, day);
+      
+      // 显示日期信息
+      const weekDay = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'][date.getDay()];
+      document.getElementById('dateInfo').textContent = `${weekDay} | ${year}年是${isLeapYear(year) ? '闰年' : '平年'}`;
+      
+      // 高亮选中的日期
+      highlightSelectedDate(date);
+    }
+    
+    // 高亮选中的日期
+    function highlightSelectedDate(date) {
+      // 移除之前的高亮
+      document.querySelectorAll('.selected-date').forEach(el => {
+        el.classList.remove('selected-date', 'ring-2', 'ring-accent');
+      });
+      
+      // 添加新的高亮
+      const year = date.getFullYear();
+      const month = date.getMonth();
+      const day = date.getDate();
+      
+      const selectedEl = document.querySelector(`[data-year="${year}"][data-month="${month}"][data-day="${day}"]`);
+      if (selectedEl) {
+        selectedEl.classList.add('selected-date', 'ring-2', 'ring-accent');
+      }
+    }
+    
+    // 渲染指定日期的日程
+    function renderSchedules(year, month, day) {
+      const dateStr = getDateString(year, month, day);
+      const scheduleList = document.getElementById('scheduleList');
+      const schedulesForDate = schedules[dateStr] || [];
+      
+      // 清空现有内容
+      scheduleList.innerHTML = '';
+      
+      if (schedulesForDate.length === 0) {
+        scheduleList.innerHTML = `
+          <div class="text-gray-500 italic text-center py-4">
+            该日期暂无日程
+          </div>
+        `;
+        return;
+      }
+      
+      // 添加日程项
+      schedulesForDate.forEach((schedule, index) => {
+        const scheduleEl = document.createElement('div');
+        scheduleEl.className = `p-2 rounded-lg border border-gray-100 flex items-start gap-2 hover:bg-gray-50 transition`;
+        
+        scheduleEl.innerHTML = `
+          <span class="w-2 h-2 mt-2 bg-schedule-${schedule.type} rounded-full flex-shrink-0"></span>
+          <div class="flex-grow">
+            <div class="font-medium text-sm">${schedule.title}</div>
+            ${schedule.desc ? `<div class="text-xs text-gray-500 mt-1">${schedule.desc}</div>` : ''}
+          </div>
+          <button class="edit-schedule text-gray-400 hover:text-primary p-1" data-index="${index}">
+            <i class="fa fa-pencil"></i>
+          </button>
+        `;
+        
+        scheduleList.appendChild(scheduleEl);
+        
+        // 添加编辑事件
+        scheduleEl.querySelector('.edit-schedule').addEventListener('click', (e) => {
+          e.stopPropagation();
+          openEditScheduleModal(dateStr, index);
+        });
+      });
+    }
+    
+    // 打开添加日程模态框
+    function openAddScheduleModal() {
+      if (!selectedDate) return;
+      
+      document.getElementById('modalTitle').textContent = '添加日程';
+      document.getElementById('scheduleDate').value = getDateStringFromDate(selectedDate);
+      document.getElementById('scheduleTitle').value = '';
+      document.getElementById('scheduleDesc').value = '';
+      document.getElementById('scheduleType').value = 'work';
+      document.getElementById('deleteScheduleBtn').classList.add('hidden');
+      
+      openModal();
+    }
+    
+    // 打开编辑日程模态框
+    function openEditScheduleModal(dateStr, index) {
+      const schedule = schedules[dateStr][index];
+      
+      document.getElementById('modalTitle').textContent = '编辑日程';
+      document.getElementById('scheduleDate').value = dateStr;
+      document.getElementById('scheduleTitle').value = schedule.title;
+      document.getElementById('scheduleDesc').value = schedule.desc || '';
+      document.getElementById('scheduleType').value = schedule.type;
+      document.getElementById('deleteScheduleBtn').classList.remove('hidden');
+      document.getElementById('deleteScheduleBtn').dataset.index = index;
+      
+      openModal();
+    }
+    
+    // 打开模态框
+    function openModal() {
+      const modal = document.getElementById('scheduleModal');
+      const modalContent = document.getElementById('modalContent');
+      
+      modal.classList.remove('hidden');
+      // 触发重排后添加动画
+      setTimeout(() => {
+        modalContent.classList.remove('scale-95', 'opacity-0');
+        modalContent.classList.add('scale-100', 'opacity-100');
+      }, 10);
+      
+      // 聚焦到标题输入框
+      document.getElementById('scheduleTitle').focus();
+    }
+    
+    // 关闭模态框
+    function closeModal() {
+      const modal = document.getElementById('scheduleModal');
+      const modalContent = document.getElementById('modalContent');
+      
+      modalContent.classList.remove('scale-100', 'opacity-100');
+      modalContent.classList.add('scale-95', 'opacity-0');
+      
+      setTimeout(() => {
+        modal.classList.add('hidden');
+      }, 300);
+    }
+    
+    // 保存日程
+    function saveSchedule() {
+      const dateStr = document.getElementById('scheduleDate').value;
+      const title = document.getElementById('scheduleTitle').value.trim();
+      const desc = document.getElementById('scheduleDesc').value.trim();
+      const type = document.getElementById('scheduleType').value;
+      const isEditMode = document.getElementById('modalTitle').textContent === '编辑日程';
+      const index = isEditMode ? parseInt(document.getElementById('deleteScheduleBtn').dataset.index) : -1;
+      
+      if (!title) {
+        alert('请输入日程标题');
+        return;
+      }
+      
+      // 确保该日期的日程数组存在
+      if (!schedules[dateStr]) {
+        schedules[dateStr] = [];
+      }
+      
+      const schedule = { title, desc, type, timestamp: new Date().getTime() };
+      
+      if (isEditMode) {
+        // 编辑现有日程
+        schedules[dateStr][index] = schedule;
+      } else {
+        // 添加新日程
+        schedules[dateStr].push(schedule);
+      }
+      
+      // 保存到本地存储
+      localStorage.setItem('calendarSchedules', JSON.stringify(schedules));
+      
+      // 更新UI
+      const [year, month, day] = dateStr.split('-').map(Number);
+      renderSchedules(year, month, day);
+      renderCalendar(currentYear, currentMonth); // 重新渲染日历以更新标记
+      
+      closeModal();
+    }
+    
+    // 删除日程
+    function deleteSchedule() {
+      if (!confirm('确定要删除这个日程吗？')) return;
+      
+      const dateStr = document.getElementById('scheduleDate').value;
+      const index = parseInt(document.getElementById('deleteScheduleBtn').dataset.index);
+      
+      // 删除日程
+      schedules[dateStr].splice(index, 1);
+      
+      // 如果该日期没有日程了，删除整个键
+      if (schedules[dateStr].length === 0) {
+        delete schedules[dateStr];
+      }
+      
+      // 保存到本地存储
+      localStorage.setItem('calendarSchedules', JSON.stringify(schedules));
+      
+      // 更新UI
+      const [year, month, day] = dateStr.split('-').map(Number);
+      renderSchedules(year, month, day);
+      renderCalendar(currentYear, currentMonth); // 重新渲染日历以更新标记
+      
+      closeModal();
+    }
+    
+    // 工具函数：获取日期字符串 YYYY-MM-DD
+    function getDateString(year, month, day) {
+      return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    }
+    
+    // 工具函数：从日期对象获取日期字符串
+    function getDateStringFromDate(date) {
+      return getDateString(date.getFullYear(), date.getMonth(), date.getDate());
+    }
+    
+    // 工具函数：检查是否为闰年
+    function isLeapYear(year) {
+      return (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0);
+    }
+    
+    // 工具函数：检查是否为节日
+    function isHoliday(month, day) {
+      const key = `${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      return !!holidays[key];
+    }
+    
+    // 工具函数：获取节日名称
+    function getHoliday(month, day) {
+      const key = `${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      return holidays[key];
+    }
+  </script>
+</body>
+</html>
