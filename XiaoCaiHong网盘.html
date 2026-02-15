@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚡ 极速云盘 · 账号同步版</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+        body {
+            background: linear-gradient(145deg, #0a1120 0%, #1a2340 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 16px;
+        }
+        
+        /* 登录卡片 */
+        .auth-card {
+            max-width: 420px;
+            width: 100%;
+            background: rgba(20, 30, 50, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 32px;
+            padding: 40px 32px;
+            box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.5);
+        }
+        .auth-title {
+            font-size: 32px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-align: center;
+            margin-bottom: 8px;
+        }
+        .auth-subtitle {
+            color: #94a3b8;
+            text-align: center;
+            margin-bottom: 32px;
+            font-size: 14px;
+        }
+        .input-group {
+            margin-bottom: 20px;
+        }
+        .input-field {
+            width: 100%;
+            padding: 16px 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 40px;
+            color: white;
+            font-size: 15px;
+            transition: all 0.2s;
+        }
+        .input-field:focus {
+            outline: none;
+            border-color: #60a5fa;
+            background: rgba(96, 165, 250, 0.1);
+        }
+        .auth-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #60a5fa, #a78bfa);
+            border: none;
+            border-radius: 40px;
+            color: white;
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 8px 0 16px;
+            transition: transform 0.2s;
+        }
+        .auth-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px -10px #60a5fa;
+        }
+        .auth-link {
+            color: #94a3b8;
+            text-align: center;
+            font-size: 14px;
+        }
+        .auth-link a {
+            color: #60a5fa;
+            text-decoration: none;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        .error-msg {
+            color: #f87171;
+            background: rgba(248, 113, 113, 0.1);
+            padding: 12px;
+            border-radius: 40px;
+            text-align: center;
+            margin-bottom: 16px;
+            font-size: 14px;
+            display: none;
+        }
+        
+        /* 主界面 */
+        .main-container {
+            max-width: 1200px;
+            width: 100%;
+            background: rgba(20, 30, 50, 0.7);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 32px;
+            padding: 28px;
+            display: none;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 28px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            background: rgba(255, 255, 255, 0.03);
+            padding: 6px 6px 6px 16px;
+            border-radius: 40px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .username {
+            color: white;
+            font-weight: 500;
+        }
+        .avatar {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #60a5fa, #a78bfa);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            color: white;
+        }
+        .logout-btn {
+            background: none;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #94a3b8;
+            padding: 8px 16px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 13px;
+            margin-left: 8px;
+        }
+        .stats {
+            display: flex;
+            gap: 24px;
+        }
+        .stat-item {
+            text-align: center;
+        }
+        .stat-value {
+            color: white;
+            font-weight: 600;
+            font-size: 22px;
+        }
+        .stat-label {
+            color: #94a3b8;
+            font-size: 12px;
+        }
+        
+        .upload-area {
+            background: rgba(255, 255, 255, 0.02);
+            border: 2px dashed rgba(96, 165, 250, 0.3);
+            border-radius: 24px;
+            padding: 40px;
+            text-align: center;
+            margin-bottom: 28px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .upload-area:hover {
+            border-color: #60a5fa;
+            background: rgba(96, 165, 250, 0.05);
+        }
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+        }
+        .sync-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(96, 165, 250, 0.15);
+            padding: 6px 16px;
+            border-radius: 40px;
+            margin-top: 16px;
+            color: #60a5fa;
+            font-size: 13px;
+        }
+        
+        .files-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            color: white;
+        }
+        .file-list {
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 20px;
+            overflow: hidden;
+        }
+        .file-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            transition: background 0.2s;
+        }
+        .file-row:hover {
+            background: rgba(96, 165, 250, 0.1);
+        }
+        .file-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: white;
+        }
+        .file-meta {
+            display: flex;
+            gap: 24px;
+            color: #94a3b8;
+            font-size: 13px;
+        }
+        .file-actions {
+            display: flex;
+            gap: 8px;
+        }
+        .btn {
+            background: rgba(96, 165, 250, 0.2);
+            border: 1px solid #60a5fa;
+            color: white;
+            padding: 6px 16px;
+            border-radius: 30px;
+            font-size: 13px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .btn-danger {
+            border-color: #f87171;
+            background: rgba(248, 113, 113, 0.1);
+        }
+        .empty-state {
+            padding: 48px;
+            text-align: center;
+            color: #94a3b8;
+        }
+        .devices-panel {
+            margin-top: 24px;
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 16px;
+        }
+        .device-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .device-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #4ade80;
+        }
+    </style>
+</head>
+<body>
+    <!-- 登录界面 -->
+    <div id="authContainer" class="auth-card">
+        <div class="auth-title">⚡ 极速云盘</div>
+        <div class="auth-subtitle">账号数据云端同步 · 无限空间</div>
+        
+        <div id="errorMsg" class="error-msg"></div>
+        
+        <div id="loginForm">
+            <div class="input-group">
+                <input type="text" id="loginUsername" class="input-field" placeholder="用户名" autocomplete="off">
+            </div>
+            <div class="input-group">
+                <input type="password" id="loginPassword" class="input-field" placeholder="密码">
+            </div>
+            <button class="auth-btn" onclick="handleLogin()">登录</button>
+            <div class="auth-link">
+                还没有账号？ <a onclick="showRegister()">立即注册</a>
+            </div>
+        </div>
+        
+        <div id="registerForm" style="display: none;">
+            <div class="input-group">
+                <input type="text" id="regUsername" class="input-field" placeholder="用户名">
+            </div>
+            <div class="input-group">
+                <input type="password" id="regPassword" class="input-field" placeholder="密码">
+            </div>
+            <div class="input-group">
+                <input type="password" id="regConfirm" class="input-field" placeholder="确认密码">
+            </div>
+            <button class="auth-btn" onclick="handleRegister()">注册</button>
+            <div class="auth-link">
+                已有账号？ <a onclick="showLogin()">去登录</a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 主界面 -->
+    <div id="mainContainer" class="main-container">
+        <div class="header">
+            <div class="logo">⚡ 极速云盘</div>
+            
+            <div class="stats">
+                <div class="stat-item">
+                    <div class="stat-value" id="fileCount">0</div>
+                    <div class="stat-label">文件</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="storageUsed">0 B</div>
+                    <div class="stat-label">已用</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="deviceCount">1</div>
+                    <div class="stat-label">设备</div>
+                </div>
+            </div>
+            
+            <div class="user-menu">
+                <span class="username" id="currentUsername">user</span>
+                <div class="avatar" id="userAvatar">U</div>
+                <button class="logout-btn" onclick="logout()">退出</button>
+            </div>
+        </div>
+        
+        <!-- 上传区域 -->
+        <div class="upload-area" id="dropZone">
+            <div class="upload-icon">📤</div>
+            <h3 style="color: white; margin-bottom: 8px;">拖拽文件到此处</h3>
+            <p style="color: #94a3b8; margin-bottom: 16px;">或点击选择文件</p>
+            <input type="file" id="fileInput" multiple style="display: none;">
+            <button class="btn" id="selectFileBtn" style="padding: 12px 30px;">选择文件</button>
+            <div class="sync-badge">
+                <span>🔄</span> 跨设备自动同步
+            </div>
+        </div>
+        
+        <!-- 设备列表 -->
+        <div class="devices-panel" id="devicesPanel">
+            <div style="display: flex; justify-content: space-between; color: white; margin-bottom: 12px;">
+                <span>📱 已连接设备</span>
+                <span id="onlineCount">1 在线</span>
+            </div>
+            <div id="deviceList"></div>
+        </div>
+        
+        <!-- 文件列表 -->
+        <div class="files-header">
+            <span>📁 我的文件</span>
+            <button class="btn" onclick="refreshFileList()">刷新</button>
+        </div>
+        <div class="file-list" id="fileListContainer">
+            <div class="empty-state">暂无文件，点击上方上传</div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== 用户系统 ====================
+        const USERS_KEY = 'cloud_disk_users';
+        const SESSION_KEY = 'cloud_disk_session';
+        
+        // 初始化用户数据库
+        if (!localStorage.getItem(USERS_KEY)) {
+            localStorage.setItem(USERS_KEY, JSON.stringify({}));
+        }
+        
+        // 显示错误信息
+        function showError(msg) {
+            const errorEl = document.getElementById('errorMsg');
+            errorEl.textContent = msg;
+            errorEl.style.display = 'block';
+        }
+        
+        // 注册
+        function handleRegister() {
+            const username = document.getElementById('regUsername').value.trim();
+            const password = document.getElementById('regPassword').value;
+            const confirm = document.getElementById('regConfirm').value;
+            
+            if (!username || !password) {
+                showError('请填写用户名和密码');
+                return;
+            }
+            
+            if (password.length < 3) {
+                showError('密码至少3位');
+                return;
+            }
+            
+            if (password !== confirm) {
+                showError('两次密码不一致');
+                return;
+            }
+            
+            const users = JSON.parse(localStorage.getItem(USERS_KEY));
+            
+            if (users[username]) {
+                showError('用户名已存在');
+                return;
+            }
+            
+            // 创建用户
+            users[username] = {
+                password: btoa(password), // Base64编码
+                files: [],
+                devices: [],
+                createdAt: new Date().toISOString()
+            };
+            
+            localStorage.setItem(USERS_KEY, JSON.stringify(users));
+            
+            document.getElementById('errorMsg').style.color = '#4ade80';
+            showError('注册成功，请登录');
+            setTimeout(() => {
+                showLogin();
+                document.getElementById('errorMsg').style.color = '#f87171';
+            }, 1500);
+        }
+        
+        // 登录
+        function handleLogin() {
+            const username = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            
+            if (!username || !password) {
+                showError('请填写用户名和密码');
+                return;
+            }
+            
+            const users = JSON.parse(localStorage.getItem(USERS_KEY));
+            const user = users[username];
+            
+            if (!user || user.password !== btoa(password)) {
+                showError('用户名或密码错误');
+                return;
+            }
+            
+            // 生成设备ID
+            let deviceId = localStorage.getItem('device_id');
+            if (!deviceId) {
+                deviceId = 'device_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                localStorage.setItem('device_id', deviceId);
+            }
+            
+            // 获取设备信息
+            const deviceInfo = getDeviceInfo();
+            
+            // 更新设备列表
+            const existingDevice = user.devices.find(d => d.id === deviceId);
+            if (existingDevice) {
+                existingDevice.lastSeen = Date.now();
+                existingDevice.current = true;
+            } else {
+                user.devices.push({
+                    id: deviceId,
+                    name: deviceInfo,
+                    lastSeen: Date.now(),
+                    current: true
+                });
+            }
+            
+            // 其他设备设为非当前
+            user.devices.forEach(d => {
+                if (d.id !== deviceId) d.current = false;
+            });
+            
+            users[username] = user;
+            localStorage.setItem(USERS_KEY, JSON.stringify(users));
+            
+            // 保存会话
+            localStorage.setItem(SESSION_KEY, JSON.stringify({
+                username: username,
+                deviceId: deviceId,
+                loginTime: Date.now()
+            }));
+            
+            // 加载主界面
+            loadMainInterface(username);
+        }
+        
+        // 获取设备信息
+        function getDeviceInfo() {
+            const ua = navigator.userAgent;
+            if (ua.includes('iPhone')) return 'iPhone';
+            if (ua.includes('iPad')) return 'iPad';
+            if (ua.includes('Android')) return 'Android';
+            if (ua.includes('Mac')) return 'Mac';
+            if (ua.includes('Windows')) return 'Windows PC';
+            if (ua.includes('Linux')) return 'Linux';
+            return '未知设备';
+        }
+        
+        // 退出登录
+        function logout() {
+            // 更新设备状态
+            const session = JSON.parse(localStorage.getItem(SESSION_KEY));
+            if (session) {
+                const users = JSON.parse(localStorage.getItem(USERS_KEY));
+                const user = users[session.username];
+                if (user) {
+                    const device = user.devices.find(d => d.id === session.deviceId);
+                    if (device) {
+                        device.current = false;
+                        device.lastSeen = Date.now();
+                    }
+                    users[session.username] = user;
+                    localStorage.setItem(USERS_KEY, JSON.stringify(users));
+                }
+            }
+            
+            localStorage.removeItem(SESSION_KEY);
+            document.getElementById('authContainer').style.display = 'block';
+            document.getElementById('mainContainer').style.display = 'none';
+        }
+        
+        // 加载主界面
+        function loadMainInterface(username) {
+            document.getElementById('authContainer').style.display = 'none';
+            document.getElementById('mainContainer').style.display = 'block';
+            
+            document.getElementById('currentUsername').textContent = username;
+            document.getElementById('userAvatar').textContent = username.charAt(0).toUpperCase();
+            
+            // 加载数据
+            loadUserData();
+            
+            // 启动同步监听
+            startSyncListener();
+        }
+        
+        // 加载用户数据
+        function loadUserData() {
+            const session = JSON.parse(localStorage.getItem(SESSION_KEY));
+            if (!session) return;
+            
+            const users = JSON.parse(localStorage.getItem(USERS_KEY));
+            const user = users[session.username];
+            if (!user) return;
+            
+            renderFileList(user.files || []);
+            renderDevices(user.devices || []);
+            updateStats(user.files || []);
+        }
+        
+        // 渲染文件列表
+        function renderFileList(files) {
+            const container = document.getElementById('fileListContainer');
+            
+            if (!files || files.length === 0) {
+                container.innerHTML = '<div class="empty-state">📭 暂无文件，点击上传</div>';
+                return;
+            }
+            
+            // 按时间倒序
+            const sorted = [...files].sort((a, b) => b.timestamp - a.timestamp);
+            
+            let html = '';
+            sorted.forEach(file => {
+                html += `
+                    <div class="file-row">
+                        <div class="file-info">
+                            <span>${file.type?.startsWith('image/') ? '🖼️' : '📄'}</span>
+                            <div>
+                                <div style="margin-bottom: 4px;">${file.name}</div>
+                                <div class="file-meta">
+                                    <span>${formatBytes(file.size)}</span>
+                                    <span>${new Date(file.timestamp).toLocaleString()}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="file-actions">
+                            <button class="btn" onclick="downloadFile('${file.id}')">下载</button>
+                            <button class="btn btn-danger" onclick="deleteFile('${file.id}')">删除</button>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+        
+        // 渲染设备列表
+        function renderDevices(devices) {
+            const container = document.getElementById('deviceList');
+            const session = JSON.parse(localStorage.getItem(SESSION_KEY));
+            
+            if (!devices || devices.length === 0) {
+                container.innerHTML = '<div style="color:#94a3b8; padding:10px;">暂无其他设备</div>';
+                return;
+            }
+            
+            let html = '';
+            let onlineCount = 0;
+            const now = Date.now();
+            
+            devices.forEach(device => {
+                const isCurrent = device.id === session?.deviceId;
+                const isOnline = isCurrent || (now - device.lastSeen < 60000); // 1分钟内算在线
+                if (isOnline) onlineCount++;
+                
+                html += `
+                    <div class="device-item">
+                        <span class="device-dot" style="background: ${isOnline ? '#4ade80' : '#94a3b8'}"></span>
+                        <span style="color: white; flex:1;">${device.name} ${isCurrent ? '(当前)' : ''}</span>
+                        <span style="color: #94a3b8; font-size: 12px;">
+                            ${isOnline ? '在线' : new Date(device.lastSeen).toLocaleTimeString()}
+                        </span>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+            document.getElementById('onlineCount').textContent = onlineCount + ' 在线';
+            document.getElementById('deviceCount').textContent = onlineCount;
+        }
+        
+        // 更新统计
+        function updateStats(files) {
+            document.getElementById('fileCount').textContent = files.length;
+            
+            const totalSize = files.reduce((acc, f) => acc + (f.size || 0), 0);
+            document.getElementById('storageUsed').textContent = formatBytes(totalSize);
+        }
+        
+        // 格式化大小
+        function formatBytes(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+        }
+        
+        // 上传文件
+        async function uploadFile(file) {
+            const session = JSON.parse(localStorage.getItem(SESSION_KEY));
+            if (!session) return;
+            
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const fileData = e.target.result;
+                    
+                    // 生成文件ID
+                    const fileId = 'file_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                    
+                    const fileInfo = {
+                        id: fileId,
+                        name: file.name,
+                        size: file.size,
+                        type: file.type,
+                        data: fileData, // Base64数据
+                        timestamp: Date.now(),
+                        deviceId: session.deviceId
+                    };
+                    
+                    // 保存到用户数据
+                    const users = JSON.parse(localStorage.getItem(USERS_KEY));
+                    const user = users[session.username];
+                    
+                    if (!user.files) user.files = [];
+                    user.files.push(fileInfo);
+                    
+                    users[session.username] = user;
+                    localStorage.setItem(USERS_KEY, JSON.stringify(users));
+                    
+                    // 触发同步
+                    localStorage.setItem('sync_trigger_' + session.username, Date.now().toString());
+                    
+                    // 刷新界面
+                    loadUserData();
+                    
+                    resolve(fileInfo);
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+        
+        // 下载文件
+        window.downloadFile = function(fileId) {
+            const session = JSON.parse(localStorage.getItem(SESSION_KEY));
+            if (!session) return;
+            
+            const users = JSON.parse(localStorage.getItem(USERS_KEY));
+            const user = users[session.username];
+            const file = user.files.find(f => f.id === fileId);
+            
+            if (!file) return;
+            
+            // 从Base64创建下载链接
+            const link = document.createElement('a');
+            link.href = file.data;
+            link.download = file.name;
+            link.click();
+        };
+        
+        // 删除文件
+        window.deleteFile = function(fileId) {
+            if (!confirm('确定删除？其他设备将同步移除')) return;
+            
+            const session = JSON.parse(localStorage.getItem(SESSION_KEY));
+            if (!session) return;
+            
+            const users = JSON.parse(localStorage.getItem(USERS_KEY));
+            const user = users[session.username];
+            
+            user.files = user.files.filter(f => f.id !== fileId);
+            
+            users[session.username] = user;
+            localStorage.setItem(USERS_KEY, JSON.stringify(users));
+            
+            // 触发同步
+            localStorage.setItem('sync_trigger_' + session.username, Date.now().toString());
+            
+            // 刷新
+            loadUserData();
+        };
+        
+        // 刷新文件列表
+        window.refreshFileList = function() {
+            loadUserData();
+        };
+        
+        // 同步监听
+        function startSyncListener() {
+            const session = JSON.parse(localStorage.getItem(SESSION_KEY));
+            if (!session) return;
+            
+            window.addEventListener('storage', (e) => {
+                if (e.key === 'sync_trigger_' + session.username) {
+                    console.log('检测到其他设备更新，同步中...');
+                    loadUserData();
+                }
+            });
+        }
+        
+        // 界面切换
+        window.showRegister = function() {
+            document.getElementById('loginForm').style.display = 'none';
+            document.getElementById('registerForm').style.display = 'block';
+            document.getElementById('errorMsg').style.display = 'none';
+        };
+        
+        window.showLogin = function() {
+            document.getElementById('loginForm').style.display = 'block';
+            document.getElementById('registerForm').style.display = 'none';
+            document.getElementById('errorMsg').style.display = 'none';
+        };
+        
+        // 检查是否已登录
+        function checkSession() {
+            const session = localStorage.getItem(SESSION_KEY);
+            if (session) {
+                const sessionData = JSON.parse(session);
+                loadMainInterface(sessionData.username);
+            }
+        }
+        
+        // ==================== 初始化上传 ====================
+        function initUpload() {
+            const dropZone = document.getElementById('dropZone');
+            const fileInput = document.getElementById('fileInput');
+            const selectBtn = document.getElementById('selectFileBtn');
+            
+            selectBtn.addEventListener('click', () => {
+                fileInput.click();
+            });
+            
+            dropZone.addEventListener('click', (e) => {
+                if (e.target !== selectBtn) fileInput.click();
+            });
+            
+            fileInput.addEventListener('change', async (e) => {
+                for (const file of e.target.files) {
+                    await uploadFile(file);
+                }
+                fileInput.value = '';
+            });
+            
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropZone.style.borderColor = '#60a5fa';
+            });
+            
+            dropZone.addEventListener('drop', async (e) => {
+                e.preventDefault();
+                dropZone.style.borderColor = 'rgba(96, 165, 250, 0.3)';
+                
+                for (const file of e.dataTransfer.files) {
+                    await uploadFile(file);
+                }
+            });
+        }
+        
+        // 启动
+        window.addEventListener('load', () => {
+            checkSession();
+            initUpload();
+        });
+    </script>
+</body>
+</html>
